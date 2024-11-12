@@ -42,15 +42,33 @@ class Bilibili_Spider():
             seconds = int(time_item[0])*60*60 + int(time_item[1])*60 + int(time_item[2])
         return seconds
 
+
     def date_convert(self, date_str):
-        date_item = date_str.split('-')
-        assert len(date_item) == 2 or len(date_item) == 3, 'date format error: {}, x-x or x-x-x expected!'.format(date_str)
-        if len(date_item) == 2:
-            year = datetime.datetime.now().strftime('%Y')
-            date_str = '{}-{:>02d}-{:>02d}'.format(year, int(date_item[0]), int(date_item[1]))
+        #在这里，我加了一个if-else的结构来判断几小时前的情况，这个问题已经解决了
+        cutoff_date = datetime.datetime(2020, 1, 1)
+
+        if '小时前' in date_str:
+            hours = int(re.search(r'(\d+)小时前', date_str).group(1))
+            pub_datetime = datetime.datetime.now() - datetime.timedelta(hours=hours)
+            return pub_datetime.strftime('%Y-%m-%d')
+
+        elif '昨天' in date_str:
+            # 处理 "昨天"
+            pub_datetime = datetime.datetime.now() - datetime.timedelta(days=1)
+            date_str = pub_datetime.strftime('%Y-%m-%d')
+
         else:
-            date_str = '{}-{:>02d}-{:>02d}'.format(date_item[0], int(date_item[1]), int(date_item[2]))
+            date_item = date_str.split('-')
+            assert len(date_item) == 2 or len(date_item) == 3, 'date format error: {}, x-x or x-x-x expected!'.format(date_str)
+            if len(date_item) == 2:
+                year = datetime.datetime.now().strftime('%Y')
+                date_str = '{}-{:>02d}-{:>02d}'.format(year, int(date_item[0]), int(date_item[1]))
+            else:
+                date_str = '{}-{:>02d}-{:>02d}'.format(date_item[0], int(date_item[1]), int(date_item[2]))
+
         return date_str
+
+
 
     def get_page_num(self):
         page_url = self.user_url + '/video?tid=0&pn={}&keyword=&order=pubdate'.format(1)
